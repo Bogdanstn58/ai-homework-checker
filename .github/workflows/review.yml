@@ -24,7 +24,7 @@ jobs:
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           
-      - name: Debug: list files in root
+      - name: Debug - list files
         run: |
           echo "=== Current directory ==="
           pwd
@@ -32,14 +32,14 @@ jobs:
           ls -la
           echo "=== Check solution.py ==="
           if [ -f solution.py ]; then
-            echo "solution.py exists, first 3 lines:"
+            echo "solution.py exists"
             head -3 solution.py
           else
-            echo "ERROR: solution.py NOT FOUND"
+            echo "solution.py NOT FOUND"
             exit 1
           fi
           
-      - name: Run local tests (pytest)
+      - name: Run local tests
         run: pytest tests/ -v
         
       - name: Run AI Reviewer
