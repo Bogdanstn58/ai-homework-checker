@@ -22,4 +22,4 @@ jobs:
       - name: AI Review
         run: python scripts/ai_review.py solution.py
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}

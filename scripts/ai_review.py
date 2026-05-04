@@ -3,7 +3,7 @@ import sys
 import requests
 import json
 
-GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
+GITHUB_TOKEN = os.environ.get("GH_TOKEN")
 # Новый API-адрес GitHub Models (актуальный на 2025 год)
 MODEL_API_URL = "https://models.github.ai/inference/chat/completions"
 
