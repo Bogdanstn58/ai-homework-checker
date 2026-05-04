@@ -1,12 +1,9 @@
+# solution.py
+
 def count_substring_occurrences(main_string, sub_string):
     """
-    Задача: вернуть количество вхождений sub_string в main_string.
-    Поиск нечувствителен к регистру.
+    Возвращает количество вхождений sub_string в main_string
+    (без учёта регистра).
+    Сейчас это заглушка, которую студент заменит на реальный код.
     """
-    # TODO: напишите свой код здесь
-    pass
-
-if __name__ "__main__":
-    # Примеры для самопроверки
-    print(count_substring_occurrences("Hello World", "hello"))  # ожидается 1
-    print(count_substring_occurrences("ababa", "aba"))          # ожидается 2
+    return 0  # Временно, чтобы импорт проходил
