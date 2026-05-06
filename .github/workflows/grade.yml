@@ -2,56 +2,83 @@ name: Grade assignment
 
 on:
   push:
-    branches: [ "solution" ]  # Студент пушит изменения в свою ветку решения
+    branches: [ "solution", "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
-  setup-and-test:
+  grade:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         include:
           - language: python
             version: '3.11'
-            build_cmd: |
+            test_cmd: |
               pip install -r requirements.txt
-              pytest tests.py -v
+              pytest tests/ -v
+            ai_script: python scripts/ai_review.py solution.py
+            artifact_name: ai_report_python.txt
           - language: cpp
             version: '12'
-            # `aminya/setup-cpp` — это готовое решение, которое устанавливает компилятор, CMake и другие нужные инструменты
-            setup_action: aminya/setup-cpp@v1
-            build_cmd: |
-              mkdir build && cd build
+            test_cmd: |
+              mkdir -p build && cd build
               cmake .. -DCMAKE_CXX_COMPILER=g++-12
               make
               ctest --output-on-failure
+            ai_script: python scripts/ai_review_cpp.py solution.cpp
+            artifact_name: ai_report_cpp.txt
+
     steps:
-      # 1. Общий шаг для загрузки кода
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Условный шаг для установки компилятора C++
-      - name: Setup C++
-        if: matrix.language == 'cpp'
-        uses: ${{ matrix.setup_action }}
-        with:
-          compiler: gcc-${{ matrix.version }}
-          cmake: true
-
-      # 3. Условный шаг для установки Python
+      # --- Установка Python (если язык python) ---
       - name: Setup Python
         if: matrix.language == 'python'
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.version }}
 
-      # 4. Выполнение специфичной для языка команды сборки/тестирования
-      - name: Run build and tests
-        run: ${{ matrix.build_cmd }}
-
-      # 5. Запуск ИИ для C++ (пример интеграции)
-      - name: Run AI Reviewer for C++
+      # --- Установка C++ (если язык cpp) ---
+      - name: Setup C++
         if: matrix.language == 'cpp'
+        uses: aminya/setup-cpp@v1
+        with:
+          compiler: gcc-${{ matrix.version }}
+          cmake: true
+          vcpkg: false
+
+      # --- Отладка: список файлов ---
+      - name: List files
+        run: |
+          echo "=== Current directory ==="
+          pwd
+          echo "=== Files in root ==="
+          ls -la
+          echo "=== Check solution file ==="
+          if [ "${{ matrix.language }}" = "python" ]; then
+            ls -la solution.py || echo "solution.py NOT FOUND"
+          else
+            ls -la solution.cpp || echo "solution.cpp NOT FOUND"
+          fi
+
+      # --- Запуск тестов и сборки ---
+      - name: Run tests
+        run: ${{ matrix.test_cmd }}
+
+      # --- Запуск ИИ-ревью ---
+      - name: Run AI Reviewer
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
-          python scripts/ai_review_cpp.py solution.cpp > ai_report_${{ matrix.language }}.txt
+          ${{ matrix.ai_script }} > ${{ matrix.artifact_name }}
+          echo "AI review saved to ${{ matrix.artifact_name }}"
+
+      # --- Сохранение отчёта как артефакта ---
+      - name: Upload AI report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.artifact_name }}
