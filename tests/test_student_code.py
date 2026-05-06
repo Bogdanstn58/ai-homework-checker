@@ -1,21 +1,25 @@
-# tests/test_student_code.py
-from solution import count_substring_occurrences
+from solution import find_multiples_of_3
 
-def test_simple_occurrence():
-    """Проверяем обычный случай."""
-    text = "Hello world, hello everyone!"
-    substring = "hello"
-    # Ожидаем 2, так как функция должна игнорировать регистр
-    assert count_substring_occurrences(text, substring) == 2
+def test_length():
+    result = find_multiples_of_3()
+    # Чисел, кратных 3, от 1 до 1000: floor(1000/3) = 333
+    assert len(result) == 333, f"Ожидалось 333 числа, получено {len(result)}"
 
-def test_no_occurrence():
-    """Подстрока не найдена."""
-    text = "Happy coding!"
-    substring = "python"
-    assert count_substring_occurrences(text, substring) == 0
+def test_all_multiples_of_3():
+    result = find_multiples_of_3()
+    for num in result:
+        assert num % 3 == 0, f"Число {num} не кратно 3"
 
-def test_empty_string():
-    """Пустая строка."""
-    text = ""
-    substring = "word"
-    assert count_substring_occurrences(text, substring) == 0
+def test_range():
+    result = find_multiples_of_3()
+    for num in result:
+        assert 1 <= num <= 1000, f"Число {num} вне диапазона 1..1000"
+
+def test_uniqueness():
+    result = find_multiples_of_3()
+    assert len(result) == len(set(result)), "Есть дубликаты в списке"
+
+def test_correct_values():
+    expected = [i for i in range(1, 1001) if i % 3 == 0]
+    result = find_multiples_of_3()
+    assert result == expected, "Список не соответствует ожидаемому"
