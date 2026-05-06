@@ -4,10 +4,7 @@ project(StudentHomework CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Добавляем исполняемый файл студента (опционально, можно и без него)
-add_executable(student_solution solution.cpp)
-
-# ---- Настройка тестов с GoogleTest ----
+# Подключаем GoogleTest через FetchContent
 include(FetchContent)
 FetchContent_Declare(
   googletest
@@ -15,10 +12,10 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
-# Создаём исполняемый файл для тестов
+# Создаём тестовый исполняемый файл, связывая тесты и код студента
 add_executable(run_tests tests/test_cpp.cpp solution.cpp)
 target_link_libraries(run_tests GTest::gtest GTest::gtest_main)
 
-# Включаем тестирование CTest
+# Регистрируем тест для CTest
 enable_testing()
 add_test(NAME CppHomeworkTest COMMAND run_tests)
