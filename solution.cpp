@@ -9,7 +9,4 @@ int maxMultipleOf9() {
     return max;
 }
 
-// Альтернативное эффективное решение (без цикла):
-int maxMultipleOf9_efficient() {
-    return (1000 / 9) * 9;
-}
+
