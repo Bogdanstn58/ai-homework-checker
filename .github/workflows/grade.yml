@@ -15,17 +15,24 @@ jobs:
         include:
           - language: python
             version: '3.11'
+            setup_action: actions/setup-python@v5
+            setup_cmd: ''   # не используется
+            build_cmd: ''
             test_cmd: |
               pip install -r requirements.txt
               pytest tests/ -v
             ai_script: python scripts/ai_review.py solution.py
             artifact_name: ai_report_python.txt
+
           - language: cpp
             version: '12'
+            setup_action: aminya/setup-cpp@v1
+            setup_cmd: ''   # будет отдельно
+            build_cmd: |
+              cmake -B build -DCMAKE_CXX_COMPILER=g++-12
+              cmake --build build
             test_cmd: |
-              mkdir -p build && cd build
-              cmake .. -DCMAKE_CXX_COMPILER=g++-12
-              make
+              cd build
               ctest --output-on-failure
             ai_script: python scripts/ai_review_cpp.py solution.cpp
             artifact_name: ai_report_cpp.txt
@@ -34,41 +41,48 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # --- Установка Python (если язык python) ---
+      # Установка Python
       - name: Setup Python
         if: matrix.language == 'python'
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.version }}
 
-      # --- Установка C++ (если язык cpp) ---
+      # Установка C++ компилятора и CMake
       - name: Setup C++
         if: matrix.language == 'cpp'
         uses: aminya/setup-cpp@v1
         with:
           compiler: gcc-${{ matrix.version }}
           cmake: true
+          ninja: false
           vcpkg: false
 
-      # --- Отладка: список файлов ---
+      # Отладка (проверка наличия файлов)
       - name: List files
         run: |
           echo "=== Current directory ==="
           pwd
-          echo "=== Files in root ==="
+          echo "=== Files ==="
           ls -la
-          echo "=== Check solution file ==="
           if [ "${{ matrix.language }}" = "python" ]; then
-            ls -la solution.py || echo "solution.py NOT FOUND"
+            echo "solution.py exists: $(test -f solution.py && echo yes || echo no)"
           else
-            ls -la solution.cpp || echo "solution.cpp NOT FOUND"
+            echo "solution.cpp exists: $(test -f solution.cpp && echo yes || echo no)"
+            echo "CMakeLists.txt exists: $(test -f CMakeLists.txt && echo yes || echo no)"
           fi
 
-      # --- Запуск тестов и сборки ---
+      # Сборка (только для C++, для Python пусто)
+      - name: Build
+        if: matrix.language == 'cpp' && matrix.build_cmd != ''
+        run: ${{ matrix.build_cmd }}
+
+      # Запуск тестов
       - name: Run tests
         run: ${{ matrix.test_cmd }}
+        continue-on-error: true    # чтобы ИИ запускался даже при падении тестов
 
-      # --- Запуск ИИ-ревью ---
+      # Запуск ИИ-ревью
       - name: Run AI Reviewer
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -76,7 +90,7 @@ jobs:
           ${{ matrix.ai_script }} > ${{ matrix.artifact_name }}
           echo "AI review saved to ${{ matrix.artifact_name }}"
 
-      # --- Сохранение отчёта как артефакта ---
+      # Сохранение отчёта
       - name: Upload AI report
         uses: actions/upload-artifact@v4
         with:
