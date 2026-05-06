@@ -1,0 +1,39 @@
+name: Grade assignment
+
+on:
+  push:
+    branches: [ "solution" ]  # Студент пушит изменения в свою ветку решения
+
+jobs:
+  grade:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Загружаем код
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Настраиваем Python и зависимости
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      # 3. ЗАПУСКАЕМ ИИ, НО НЕ ПОКАЗЫВАЕМ РЕЗУЛЬТАТ СТУДЕНТУ
+      - name: Run AI Reviewer (но сохраняем результат)
+        id: ai_review
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          python scripts/ai_review.py solution.py > ai_report.txt
+          echo "AI review done."
+
+      # 4. Сохраняем полученный отчёт ИИ как артефакт
+      - name: Upload AI report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-grading-report
+          path: ai_report.txt
