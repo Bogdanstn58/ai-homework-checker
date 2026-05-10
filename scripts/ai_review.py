@@ -52,31 +52,31 @@ def review_code_with_llm(code_to_review):
         return f"Ошибка при обращении к API: {e}"
 
 def send_to_google_sheets(review_text):
-    """Отправляет результат проверки в Google Sheets."""
     if not APPS_SCRIPT_URL:
         print("APPS_SCRIPT_URL не задан, пропускаем отправку в Google Sheets.")
         return
 
-    # Парсим оценку (простой пример, можно доработать)
-    grade = "N/A"
-    if "Оценка:" in review_text:
-        try:
-            grade_part = review_text.split("Оценка:")[1].split(",")[0].strip()
-            grade = grade_part
-        except:
-            pass
+    # ... (парсинг оценки и комментария остается как у вас) ...
 
+    # Формируем payload так, как его ждет Apps Script
     payload = {
         "student": STUDENT_NAME,
         "assignment": REPO_NAME,
         "grade": grade,
-        "comment": review_text,
-        "spreadsheetId": SPREADSHEET_ID
+        "comment": review_text
     }
 
+    # Правильные заголовки для JSON
+    headers = {
+        "Content-Type": "application/json"
+    }
+
+    print(f"Отправка данных в Google Sheets: {payload}")
     try:
-        response = requests.post(APPS_SCRIPT_URL, json=payload)
-        print(f"Результат отправлен в Google Sheets. Статус: {response.status_code}")
+        # ВАЖНО: используем json=payload, чтобы requests сам установил Content-Type
+        response = requests.post(APPS_SCRIPT_URL, json=payload, headers=headers)
+        print(f"Результат отправки. Статус: {response.status_code}, Ответ: {response.text}")
+        response.raise_for_status() # Это вызовет исключение при плохом статусе
     except Exception as e:
         print(f"Не удалось отправить результат в Google Sheets: {e}")
 
